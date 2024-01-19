@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+# keycloak
+  postgres-keycloak:
+    image: postgres
+    container_name: postgres-keycloak
+    restart: always
+    environment:
+      - PGDATA=/var/lib/postgresql/data
+      - POSTGRES_USER=${DB_KEYCLOAK_USER}
+      - POSTGRES_PASSWORD=${DB_KEYCLOAK_PASSWORD}
+      - POSTGRES_INITDB_ARGS='--encoding=UTF-8'
+    volumes:
+      - postgres_keycloak_data:/var/lib/postgresql/data
+    networks:
+      - keycloak
+
+  keycloak:
+    image: quay.io/keycloak/keycloak
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_USER}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
+      KC_DB: postgres
+      KC_DB_USERNAME: ${DB_KEYCLOAK_USER}
+      KC_DB_PASSWORD: ${DB_KEYCLOAK_PASSWORD}
+      KC_DB_URL: jdbc:postgresql://postgres-keycloak:5432/${DB_KEYCLOAK_USER}
+    ports:
+      - 18080:8080
+    command:
+      - start-dev
+    networks:
+      - keycloak
+
+volumes:
+  postgres_keycloak_data:
+
+networks:
+    keycloak:
+        driver: bridge

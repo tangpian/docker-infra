@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+# apisix
+  etcd:
+    hostname: etcd
+    image: bitnami/etcd
+    volumes:
+      - "etcd_data:/bitnami/etcd/data"
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://0.0.0.0:2379
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+    networks:
+      - apisix
+
+  etcdkeeper:
+    hostname: etcdkeeper
+    image: evildecay/etcdkeeper
+    ports:
+      - "8099:8080"
+    networks:
+      - apisix
+
+  apisix:
+    image: apache/apisix
+    restart: always
+    volumes:
+      - ./apisix_config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - apisix_logs:/usr/local/apisix/logs
+    ports:
+      - "9180:9180/tcp"
+      - "9080:9080/tcp"
+      - "9091:9091/tcp"
+      - "9443:9443/tcp"
+      - "9092:9092/tcp"
+    depends_on:
+      - etcd
+    networks:
+      - apisix
+
+  apisix-dashboard:
+    image: apache/apisix-dashboard
+    restart: always
+    volumes:
+      - ./dashboard_config.yaml:/usr/local/apisix-dashboard/conf/conf.yaml:ro
+    ports:
+      - "9000:9000/tcp"
+    depends_on:
+      - etcd      
+    networks:
+      - apisix
+
+volumes:
+  etcd_data:
+  apisix_logs:
+
+networks:
+    apisix:
+        driver: bridge
