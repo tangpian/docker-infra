@@ -1,0 +1,37 @@
+version: '3'
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: ${DB_POSTGREST_DBNAME}
+      POSTGRES_USER: ${DB_POSTGREST_USER}
+      POSTGRES_PASSWORD: ${DB_POSTGREST_PASSWORD}
+    networks:
+      - backend
+
+  postgrest:
+    image: postgrest/postgrest
+    ports:
+      - "3000:3000"
+    environment:
+      PGRST_DB_URI: postgres://${DB_POSTGREST_USER}:${DB_POSTGREST_PASSWORD}@db:5432/${DB_POSTGREST_DBNAME}
+      PGRST_OPENAPI_SERVER_PROXY_URI: http://127.0.0.1:3000
+    depends_on:
+      - db
+    networks:
+      - backend
+
+  swagger:
+    image: swaggerapi/swagger-ui
+    ports:
+      - "8080:8080"
+    expose:
+      - "8080"
+    environment:
+      API_URL: http://postgrest:3000/
+    networks:
+      - backend
+
+networks:
+    backend:
+        driver: bridge
